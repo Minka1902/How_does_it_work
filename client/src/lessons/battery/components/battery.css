@@ -1,0 +1,47 @@
+.battery {
+  --battery-glow: #ffc24a;
+}
+
+.battery .iso-line[data-flow] {
+  opacity: 0;
+}
+
+.battery [data-current="discharge"] :is([data-part="wire.plus"], [data-part="wire.lamp"], [data-part="wire.return"]) .iso-line[data-flow],
+.battery [data-current="charge"] :is([data-part="wire.plus"], [data-part="wire.charge"], [data-part="wire.charger"]) .iso-line[data-flow] {
+  opacity: 1;
+}
+
+.battery [data-current="discharge"] .iso-line[data-flow] {
+  animation-direction: reverse;
+}
+
+.battery-glow {
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  transition: opacity 400ms var(--ease);
+}
+
+.battery[data-theme="dark"] .battery-glow {
+  mix-blend-mode: screen;
+}
+
+.battery [data-current="discharge"] .battery-glow {
+  opacity: 1;
+}
+
+.battery-glow-core {
+  stop-color: var(--battery-glow);
+  stop-opacity: 0.85;
+}
+
+.battery-glow-edge {
+  stop-color: var(--battery-glow);
+  stop-opacity: 0;
+}
+
+.battery-ions circle {
+  fill: var(--anatomy-lit);
+  stroke: var(--anatomy-paper);
+  stroke-width: 0.5;
+}

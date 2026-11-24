@@ -1,0 +1,52 @@
+.iso.hiiw-figure {
+  --anatomy-page: #0b1422;
+  --anatomy-card: #101c2e;
+  --anatomy-paper: #101c2e;
+  --anatomy-face: #172538;
+  --anatomy-top: #18273b;
+  --anatomy-shade-0: #0c1625;
+  --anatomy-shade-1: #0f1a2b;
+  --anatomy-shade-2: #121f31;
+  --anatomy-shade-3: #152337;
+  --anatomy-lit-top: #213350;
+  --anatomy-lit-shade: #1a2a42;
+  --anatomy-hi: #d3deec;
+  --anatomy-mid: #687b96;
+  --anatomy-lo: #3b4c66;
+  --anatomy-faint: #26354c;
+  --anatomy-halo: #03070d;
+  --anatomy-text: #a6b3c6;
+  --anatomy-strong: #e3eaf4;
+  --anatomy-muted: #6c7b91;
+}
+
+.iso.hiiw-figure[data-theme="light"] {
+  --anatomy-page: #f6f7f4;
+  --anatomy-card: #fdfdfb;
+  --anatomy-paper: #fdfdfb;
+  --anatomy-face: #ffffff;
+  --anatomy-top: #ffffff;
+  --anatomy-shade-0: #dcdfe2;
+  --anatomy-shade-1: #e5e7ea;
+  --anatomy-shade-2: #edeef0;
+  --anatomy-shade-3: #f4f5f6;
+  --anatomy-lit-top: #ffffff;
+  --anatomy-lit-shade: #eef0f2;
+  --anatomy-hi: #1d2633;
+  --anatomy-mid: #858d99;
+  --anatomy-lo: #b2b8c1;
+  --anatomy-faint: #d3d7dd;
+  --anatomy-halo: #7e8794;
+  --anatomy-text: #4a5566;
+  --anatomy-strong: #16202e;
+  --anatomy-muted: #8a93a1;
+}
+
+.hiiw-figure .iso-svg,
+.hiiw-figure input[type="range"] {
+  direction: ltr;
+}
+
+.hiiw-figure .iso-figure {
+  margin: 0;
+}
