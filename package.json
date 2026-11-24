@@ -1,0 +1,13 @@
+{
+  "name": "hiiw",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "test": "npm --prefix client test",
+    "lesson:new": "node scripts/lesson-new.js",
+    "lesson:check": "node scripts/lesson-check.js",
+    "lesson:audit": "node scripts/lesson-audit.js"
+  }
+}

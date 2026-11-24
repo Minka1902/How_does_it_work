@@ -1,0 +1,41 @@
+:root {
+  --paper: #f6f7f4;
+  --paper-raised: #fdfdfb;
+  --ink: #16202e;
+  --ink-soft: #4a5566;
+  --ink-faint: #8a93a1;
+  --line: #d9dee6;
+  --line-strong: #b9c2cf;
+  --accent: #1f5fd1;
+  --accent-soft: #e4ecfb;
+  --grid: #1f5fd114;
+  --grid-major: #1f5fd122;
+  --focus: #1f5fd1;
+  --shadow: 0 1px 0 #ffffff inset, 0 0 0 1px #0000000d, 0 8px 24px -12px #16202e33;
+  --radius: 10px;
+  --radius-small: 6px;
+  --gutter: 16px;
+  --max: 1160px;
+  --header: 60px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", "Arial Hebrew", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease: cubic-bezier(.32, .72, 0, 1);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --paper: #0b1422;
+  --paper-raised: #101c2e;
+  --ink: #e3eaf4;
+  --ink-soft: #a6b3c6;
+  --ink-faint: #6c7b91;
+  --line: #1e2d44;
+  --line-strong: #2c3f5c;
+  --accent: #6ea2ff;
+  --accent-soft: #16294a;
+  --grid: #6ea2ff0d;
+  --grid-major: #6ea2ff17;
+  --focus: #6ea2ff;
+  --shadow: 0 1px 0 #ffffff08 inset, 0 0 0 1px #00000040, 0 8px 24px -12px #00000080;
+  color-scheme: dark;
+}
