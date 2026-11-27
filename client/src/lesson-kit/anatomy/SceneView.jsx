@@ -1,14 +1,23 @@
-import { Fragment, memo } from "react";
-import { Dots, Line, Solid } from "../../anatomy/react/draw";
+import { memo } from "react";
+import { Dots, Line } from "../../anatomy/react/draw";
+import { LayeredSolid } from "./LayeredSolid";
 
 function Draw({ draw, lit }) {
   if (draw.type === "halo") return <path className="iso-halo" d={draw.d} />;
   if (draw.type === "solid")
     return (
-      <Solid paths={draw.paths} tone={draw.tone} crease={draw.crease} flat={draw.flat} lit={draw.lit || lit} inner={draw.inner?.map((mark, index) => <Line key={index} d={mark.d} tone={mark.tone} />)} />
+      <LayeredSolid paths={draw.paths} tone={draw.tone} crease={draw.crease} flat={draw.flat} lit={draw.lit || lit} inner={draw.inner?.map((mark, index) => <Line key={index} d={mark.d} tone={mark.tone} />)} />
     );
   if (draw.type === "line") return <Line d={draw.d} tone={lit && draw.tone !== "faint" ? "lit" : draw.tone} free={draw.free} flow={draw.flow} dotted={draw.dotted} />;
   if (draw.type === "dots") return <Dots points={draw.points} size={draw.size} tone={draw.tone} />;
+  if (draw.type === "cavity")
+    return (
+      <g className="hiiw-cavity">
+        <path className="hiiw-cavity-fill" d={draw.front} />
+        <path className="iso-line" data-tone="faint" d={draw.back} />
+        <path className="iso-line" data-tone={lit ? "lit" : "lo"} d={draw.front} />
+      </g>
+    );
   if (draw.type === "faded")
     return draw.list.map(({ d, alpha }, index) => (
       <g key={index} opacity={alpha < 1 ? alpha.toFixed(2) : undefined}>
@@ -26,33 +35,28 @@ function Draw({ draw, lit }) {
   );
 }
 
-function Item({ item, focus }) {
+function Item({ item, focus, transform }) {
   const lit = item.focus !== null && item.focus === focus;
+  const body = item.draw.map((draw, index) => <Draw key={index} draw={draw} lit={lit} />);
   return (
-    <g data-part={item.name}>
-      {item.draw.map((draw, index) => (
-        <Draw key={index} draw={draw} lit={lit} />
-      ))}
+    <g data-item={item.order} data-part={item.name} data-focus={item.focus ?? undefined} data-piece={item.piece ?? undefined} data-key={item.key} data-lift={item.lift ? item.lift.toFixed(3) : undefined}>
+      {item.group ? (
+        <g data-group={item.group} transform={transform}>
+          {body}
+        </g>
+      ) : (
+        body
+      )}
     </g>
   );
 }
 
 export const SceneView = memo(function SceneView({ items, focus = null, transforms = {} }) {
-  const runs = [];
-  for (const item of items) {
-    const last = runs.at(-1);
-    if (last && last.group === item.group) last.items.push(item);
-    else runs.push({ group: item.group, items: [item] });
-  }
-
-  return runs.map((run, index) => {
-    const children = run.items.map((item) => <Item key={item.order} item={item} focus={focus} />);
-    return run.group ? (
-      <g key={index} data-group={run.group} transform={transforms[run.group]}>
-        {children}
-      </g>
-    ) : (
-      <Fragment key={index}>{children}</Fragment>
-    );
-  });
+  return (
+    <g data-scene="">
+      {items.map((item) => (
+        <Item key={item.order} item={item} focus={focus} transform={item.group ? transforms[item.group] : undefined} />
+      ))}
+    </g>
+  );
 });

@@ -25,6 +25,7 @@ async function checkLesson(slug) {
 
   const base = await load(join(dir, "text/en.js"));
   const ids = base.steps.map((step) => step.id);
+  const texts = {};
   if (new Set(ids).size !== ids.length) problems.push("text/en.js has duplicate step ids");
   for (const language of meta.languages) {
     const file = join(dir, `text/${language}.js`);
@@ -36,9 +37,16 @@ async function checkLesson(slug) {
     for (const key of ["title", "summary", "steps", "figure"]) if (!text[key]) problems.push(`text/${language}.js has no ${key}`);
     const other = (text.steps ?? []).map((step) => step.id).join(",");
     if (other !== ids.join(",")) problems.push(`text/${language}.js step ids (${other}) differ from en (${ids.join(",")})`);
+    texts[language] = text;
   }
 
   const { SCENE } = await import(pathToFileURL(join(dir, "figure/geometry.js")).href);
+  const focuses = new Set(SCENE.items.map((item) => item.focus).filter(Boolean));
+  for (const [language, text] of Object.entries(texts)) {
+    const parts = text.figure?.parts ?? {};
+    for (const focus of focuses) if (!parts[focus]) problems.push(`text/${language}.js figure.parts has no "${focus}"`);
+    for (const [id, part] of Object.entries(parts)) if (part.step && !ids.includes(part.step)) problems.push(`text/${language}.js part "${id}" points at unknown step "${part.step}"`);
+  }
   const order = await load(join(dir, "figure/order.js"));
   if (!order || order.signature !== signatureOf(SCENE.items)) problems.push(`figure/order.js is stale: run npm run lesson:audit -- ${slug}`);
   return problems;

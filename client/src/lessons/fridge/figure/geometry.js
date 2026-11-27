@@ -1,6 +1,7 @@
 import * as k from "../../../anatomy/iso-kit.mjs";
 import * as G from "../../../anatomy/lathe.mjs";
 import { orderScene } from "../../../lesson-kit/anatomy/order.js";
+import { explodeOf } from "../../../lesson-kit/anatomy/explode.js";
 import { createScene } from "../../../lesson-kit/anatomy/scene.js";
 import ORDER from "./order.js";
 
@@ -35,6 +36,7 @@ const KNOB_H = 5;
 const LINE_R = 2.2;
 const CAPILLARY_R = 0.9;
 const CABLE_R = 0.6;
+const MOVES = { lid: [0, 0, 70], front: [0, 22, 0], right: [26, 0, 0], contents: [0, 0, 56], compressor: [0, 0, 34], condenser: [0, -18, 34] };
 const TERMINAL_Y = Math.sqrt(DOME_R ** 2 - 6 ** 2);
 
 export const P = k.fitProjection(
@@ -81,6 +83,12 @@ function base(scene) {
     .dots([at([plate.x + 4, plate.y + plate.d / 2, 0.8]), at([plate.x + plate.w - 4, plate.y + plate.d / 2, 0.8])], { size: 0.45 });
 }
 
+const rimStrips = () => {
+  const { x, y, w, d } = k.insetPlan(CAB, 1.5);
+  const strip = (plan) => ({ type: "slab", plan: { ...plan, r: 0 }, z: RIM, h: 0.05, steps: 2 });
+  return [strip({ x, y, w, d: 3 }), strip({ x, y: y + d - 3, w, d: 3 }), strip({ x, y, w: 3, d }), strip({ x: x + w - 3, y, w: 3, d })];
+};
+
 function cabinet(scene) {
   scene.layer(1);
   scene.slab("cabinet.plinth", k.insetPlan(CAB, 5), 0, PLINTH_TOP, { tone: "lo", focus: "cabinet" });
@@ -96,26 +104,34 @@ function cabinet(scene) {
   scene
     .slab("evaporator.plate", { x: -126, y: INNER_BACK, w: 54, d: 1.6, r: 0.4 }, 14, 40, { tone: "lo", focus: "evaporator", bias: -200 })
     .dots([[-122, 51], [-76, 51], [-122, 17], [-76, 17]].map(([x, z]) => at([x, INNER_BACK + 1.6, z])), { size: 0.45 });
+  scene.assembly("contents", MOVES.contents);
   scene.slab("cabinet.carton", { x: -114, y: -36, w: 22, d: 16, r: 1 }, FLOOR_TOP, 30, { tone: "lo", bevel: 0.6 });
   for (const [x, y] of [[-80, -26], [-66, -31]]) {
     scene.turned("cabinet.bottle", [x, y, FLOOR_TOP], [0, 0, 1], [[0, 5.2], [20, 5.2], [24, 3.2, 1], [27, 2.1, 1], [31, 2.1]], { tone: "mid", seams: [[4, 5.2]] });
     scene.post("cabinet.cap", [x, y], 2.5, FLOOR_TOP + 31, 3, { tone: "lo" });
   }
+  scene.assembly(null);
 
   scene.layer(3);
+  scene.assembly("front", MOVES.front);
   scene.slab("cabinet.front", { x: CAB.x + WALL, y: CAB.y + CAB.d - WALL, w: CAB.w - WALL, d: WALL, r: 1 }, FLOOR_TOP, RIM - FLOOR_TOP, { focus: "cabinet", seams: [FLOOR_TOP + 10] });
+  scene.assembly("right", MOVES.right);
   scene.slab("cabinet.right", { x: CAB.x + CAB.w - WALL, y: CAB.y + WALL, w: WALL, d: CAB.d - WALL * 2, r: 1 }, FLOOR_TOP, RIM - FLOOR_TOP, { focus: "cabinet", seams: [FLOOR_TOP + 10] });
-  scene.mark("cabinet.gasket", [CAB.x + CAB.w / 2, CAB.y + CAB.d / 2, RIM], { bias: 1e3, shape: { type: "slab", plan: k.insetPlan(CAB, 2.5), z: RIM, h: 0.05, steps: 4 } }).line(k.planOutline(k.insetPlan(CAB, 3), RIM, P), { tone: "faint" });
+  scene.assembly(null);
+  scene.mark("cabinet.gasket", [CAB.x + CAB.w / 2, CAB.y + CAB.d / 2, RIM], { bias: 1e3, shapes: rimStrips() }).line(k.planOutline(k.insetPlan(CAB, 3), RIM, P), { tone: "faint" });
 
   scene.layer(5);
   scene.group("lid");
-  scene.slab("cabinet.lid", { ...CAB, r: 2 }, RIM, 6, { bevel: 1 }).line(k.planOutline(k.insetPlan(CAB, 8), RIM + 6, P), { tone: "faint" });
-  scene.slab("cabinet.handle", { x: -96, y: CAB.y + CAB.d - 9, w: 28, d: 5, r: 1.2 }, RIM + 6, 3, { tone: "mid" });
+  scene.assembly("lid", MOVES.lid);
+  scene.slab("cabinet.lid", { ...CAB, r: 2 }, RIM, 6, { bevel: 1, focus: "lid" }).line(k.planOutline(k.insetPlan(CAB, 8), RIM + 6, P), { tone: "faint" });
+  scene.slab("cabinet.handle", { x: -96, y: CAB.y + CAB.d - 9, w: 28, d: 5, r: 1.2 }, RIM + 6, 3, { tone: "mid", focus: "lid" });
+  scene.assembly(null);
   scene.group(null);
 }
 
 function thermostat(scene) {
   scene.layer(4);
+  scene.assembly("front", MOVES.front);
   const box = { x: -64, y: CAB.y + CAB.d, w: 30, d: 7, r: 1 };
   const face = box.y + box.d;
   const ticks = [];
@@ -132,6 +148,7 @@ function thermostat(scene) {
   const F = G.frameAlong([KNOB[0], face, KNOB[2]], [0, 1, 0]);
   const ribs = G.ribsOf(F, 0.6, KNOB_H - 0.6, KNOB_R, 28, P, { fade: [0.1, 0.55], seams: true });
   scene.turned("thermostat.knob", [KNOB[0], face, KNOB[2]], [0, 1, 0], [[0, KNOB_R], [KNOB_H, KNOB_R]], { tone: "hi", focus: "thermostat" }).faded(ribs);
+  scene.assembly(null);
 }
 
 function compressor(scene) {
@@ -142,6 +159,7 @@ function compressor(scene) {
   for (const [x, y] of grommets) scene.post("compressor.grommet", [x, y], 4.2, 4, 6, { tone: "lo" });
   scene.slab("compressor.bracket", { x: CX - 28, y: CY - 23, w: 56, d: 46, r: 3 }, 10, 4, { tone: "mid", focus: "compressor" });
   for (const [x, y] of grommets) scene.post("compressor.bolt", [x, y], 1.9, DOME_Z, 2.2, { tone: "mid" });
+  scene.assembly("compressor", MOVES.compressor);
   scene.turned("compressor.dome", [CX, CY, DOME_Z], [0, 0, 1], [[0, DOME_R - 2], [2, DOME_R], [26, DOME_R], [33, DOME_R - 3, 1], [39, DOME_R - 9, 1], [42.5, DOME_R - 15, 1], [44, 0]], {
     tone: "hi",
     focus: "compressor",
@@ -151,13 +169,16 @@ function compressor(scene) {
   scene.turned("compressor.terminal", [CX, CY + TERMINAL_Y, 28], [0, 1, 0], [[0, 6], [6, 6], [7.5, 4.6]], { tone: "mid" });
   scene.turned("compressor.discharge", [CX + 8, CY - DOME_R + 3, 38], [0, -1, 0], [[0, 2.8], [7, 2.8]], { tone: "mid", focus: "compressor" });
   scene.turned("compressor.suction", [CX - 8, CY - DOME_R + 3, 31], [0, -1, 0], [[0, 3.2], [7, 3.2]], { tone: "mid", focus: "compressor" });
+  scene.assembly(null);
 }
 
 function condenser(scene) {
   scene.layer(1);
+  scene.assembly("condenser", MOVES.condenser);
   for (const x of [52, 136]) scene.slab("condenser.foot", { x, y: PANEL_Y - 4, w: 8, d: 10, r: 1 }, 0, 6, { tone: "lo" });
   scene.slab("condenser.panel", { x: 52, y: PANEL_Y, w: 92, d: 2.4, r: 0.5 }, 6, 60, { tone: "lo", focus: "condenser", bias: -300 });
   for (const x of [89, 106]) scene.slab("condenser.standoff", { x, y: PANEL_Y + 2.4, w: 3, d: COND_Y - COND_R - PANEL_Y - 2.4, r: 0.3 }, 8, 54, { tone: "lo", bias: -200 });
+  scene.assembly(null);
   const fins = [];
   for (let x = 70; x <= 128; x += 6) fins.push(path3([[x, COND_Y + COND_R, COND_ROWS.at(-1)], [x, COND_Y + COND_R, COND_ROWS[0]]]));
   scene.mark("condenser.fins", [99, COND_Y + COND_R + 0.5, 35], { bias: 200, shape: { type: "slab", plan: { x: 69, y: COND_Y + COND_R, w: 60, d: 0.2, r: 0 }, z: COND_ROWS.at(-1), h: COND_ROWS[0] - COND_ROWS.at(-1), steps: 2 } }).line(fins.join(""), { tone: "lo" });
@@ -167,7 +188,7 @@ function plumbing(scene) {
   const layerOf = (piece) => (inside(piece.points[Math.floor(piece.points.length / 2)]) ? 2 : 1);
   scene.layer(1);
   const discharge = [[CX + 8, CY - DOME_R - 4, 38], [CX + 8, COND_Y, 38], [CX + 8, COND_Y, COND_ROWS[0]], ...serpentine(COND_ROWS, 66, 130, COND_Y, true), [58, COND_Y, 14], [58, -58, 14], [50, -58, 14]];
-  scene.pipe("discharge", discharge, COND_R, { focus: "condenser", flow: "red", layerOf, touch: ["condenser.standoff*", "condenser.fins*"] });
+  scene.pipe("discharge", discharge, COND_R, { focus: "condenser", flow: "red", layerOf, touch: ["condenser.standoff*", "condenser.fins*"], free: [true, false] });
   scene.turned("drier", [50, -58, 14], [-1, 0, 0], [[0, 2.4], [2, 3.4, 1], [15, 3.4, 1], [16.6, 1.6], [18, 1.6]], { tone: "mid", focus: "capillary", seams: [[5, 3.4]] });
   scene.slab("drier.clip", { x: 38, y: -61, w: 6, d: 6, r: 1 }, 0, 14 - 3.4, { tone: "lo" });
   const low = FLOOR_TOP + 2.6;
@@ -176,10 +197,12 @@ function plumbing(scene) {
   scene.layer(2);
   scene.turned("evaporator.coupling", [-121, TUBE_Y, EVAP_ROWS[0]], [1, 0, 0], [[0, 2.6], [3, 2.6]], { tone: "mid", focus: "capillary" });
   const suction = [[-118, TUBE_Y, EVAP_ROWS[0]], ...serpentine(EVAP_ROWS, -118, -78, TUBE_Y, true).slice(1, -1), [SUCTION_X, TUBE_Y, EVAP_ROWS.at(-1)], [SUCTION_X, -64, EVAP_ROWS.at(-1)], [SUCTION_X, -64, 31], [CX - 8, -64, 31], [CX - 8, CY - DOME_R - 4, 31]];
-  scene.pipe("suction", suction, LINE_R, { focus: "evaporator", flow: "blue", layerOf, touch: ["evaporator.plate*"] });
+  scene.pipe("suction", suction, LINE_R, { focus: "evaporator", flow: "blue", layerOf, touch: ["evaporator.plate*"], free: [false, true] });
   const floor = CABLE_R + 0.4;
   const cable = [[CX, CY + TERMINAL_Y + 7.5, 28], [CX, 44, 28], [CX, 44, floor], [KNOB[0], 44, floor], [KNOB[0], 44, 24]];
-  scene.pipe("cable", cable, CABLE_R, { layer: 4, limp: true, tone: "lo" });
+  scene.assembly("front", MOVES.front);
+  scene.pipe("cable", cable, CABLE_R, { layer: 4, limp: true, tone: "lo", free: [true, false] });
+  scene.assembly(null);
 }
 
 function buildFridge() {
@@ -195,4 +218,6 @@ function buildFridge() {
 
 export const SCENE = { P, items: buildFridge() };
 export const ITEMS = orderScene(SCENE.items, ORDER);
+export const EXPLODE = explodeOf(P, MOVES);
+export const AUDIT = { crowd: [["suction", "cabinet.gasket*"]] };
 export const LED = at([-38, CAB.y + CAB.d + 7, 41]);

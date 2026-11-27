@@ -1,6 +1,7 @@
 import * as k from "../../../anatomy/iso-kit.mjs";
 import * as G from "../../../anatomy/lathe.mjs";
 import { orderScene } from "../../../lesson-kit/anatomy/order.js";
+import { explodeOf } from "../../../lesson-kit/anatomy/explode.js";
 import { createScene } from "../../../lesson-kit/anatomy/scene.js";
 import { IONS } from "./model.js";
 import ORDER from "./order.js";
@@ -46,6 +47,7 @@ export const LAYERS = [
 const FACE_Y = STACK.y + STACK.d;
 const WIRE_R = 0.8;
 const WIRE_Z = 2;
+const MOVES = { cell: [0, 0, 34], bulb: [0, 0, 22], knob: [0, 0, 10], aluminium: [0, 0, 40], cathode: [0, 0, 30], separator: [0, 0, 20], anode: [0, 0, 10] };
 
 export const P = k.fitProjection([...k.boxCorners(BASE, -15, 0), ...k.boxCorners({ x: -112, y: -54, w: 230, d: 100, r: 0 }, 0, 48)], WIDTH, HEIGHT, { pad: 14, azimuth: AZIMUTH, elevation: ELEVATION });
 
@@ -80,6 +82,7 @@ function holder(scene) {
       .slab("holder.block", plan, TRAY_TOP, BLOCK_TOP - TRAY_TOP, { tone: "mid", bevel: 0.5 })
       .dots([at([plan.x + plan.w / 2, plan.y + 5, BLOCK_TOP]), at([plan.x + plan.w / 2, plan.y + plan.d - 5, BLOCK_TOP])], { size: 0.5 });
   scene.turned("cell.contact", [CONTACT, CELL_Y, CELL_Z], [1, 0, 0], [[0, 4.2], [0.6, 4.2]], { tone: "mid", focus: "cell" });
+  scene.assembly("cell", MOVES.cell);
   scene.turned(
     "cell.can",
     [CELL_START, CELL_Y, CELL_Z],
@@ -87,26 +90,29 @@ function holder(scene) {
     [[0, 5], [2.2, 5], [2.2, 10.6], [3.4, CELL_R - 0.4, 1], [4.4, CELL_R], [CELL_LENGTH - 1.2, CELL_R], [CELL_LENGTH, CELL_R - 1.2]],
     { tone: "hi", focus: "cell", seams: [[8, CELL_R], [CELL_LENGTH - 6, CELL_R]] },
   );
+  scene.assembly(null);
   const spring = k.coil(CELL_END, MINUS.x, [CELL_Y, CELL_Z], 5.4, 3, "x", P);
   scene
     .mark("holder.spring", [CELL_END + 1.5, CELL_Y, CELL_Z], { shape: { type: "solid", origin: [CELL_END, CELL_Y, CELL_Z], axis: [1, 0, 0], profile: [[0, 5.8], [MINUS.x - CELL_END, 5.8]] } })
-    .line(spring.back, { tone: "lo", free: "end" })
-    .line(spring.front, { tone: "mid", free: "end" });
+    .line(spring.back, { tone: "lo", free: true })
+    .line(spring.front, { tone: "mid", free: true });
 }
 
 function circuit(scene) {
   scene.layer(1);
   scene
-    .slab("switch.box", SWITCH, 0, SWITCH_H, { tone: "mid", bevel: 0.6, focus: "circuit" })
+    .slab("switch.box", SWITCH, 0, SWITCH_H, { tone: "mid", bevel: 0.6, focus: "switch" })
     .line(k.planOutline({ x: SWITCH.x + 4, y: SWITCH.y + 5, w: SWITCH.w - 8, d: 4, r: 2 }, SWITCH_H, P), { tone: "lo" })
     .dots(k.corners(SWITCH, 2.6).map(([x, y]) => at([x, y, SWITCH_H])), { size: 0.4 });
   scene.group("switch");
-  scene.slab("switch.knob", { x: SWITCH_STOPS.off - 3, y: SWITCH.y + 4.5, w: 6, d: 5, r: 1.2 }, SWITCH_H, 3.2, { tone: "hi", bevel: 0.4, focus: "circuit" });
+  scene.assembly("knob", MOVES.knob);
+  scene.slab("switch.knob", { x: SWITCH_STOPS.off - 3, y: SWITCH.y + 4.5, w: 6, d: 5, r: 1.2 }, SWITCH_H, 3.2, { tone: "hi", bevel: 0.4, focus: "switch" });
+  scene.assembly(null);
   scene.group(null);
 
   scene.post("lamp.socket", LAMP, SOCKET_R, 0, SOCKET_H, { tone: "mid", focus: "lamp" });
-  scene.post("lamp.neck", LAMP, 4, SOCKET_H, BULB[2] - Math.sqrt(BULB_R ** 2 - 16) - SOCKET_H, { tone: "lo", focus: "lamp" });
-  scene.ball("lamp.bulb", BULB, BULB_R, { tone: "hi", focus: "lamp" });
+  scene.post("lamp.neck", LAMP, 4, SOCKET_H, BULB[2] - Math.sqrt(BULB_R ** 2 - 16) - SOCKET_H, { tone: "lo", focus: "lamp", piece: "bulb", move: MOVES.bulb });
+  scene.ball("lamp.bulb", BULB, BULB_R, { tone: "hi", focus: "lamp", piece: "bulb", move: MOVES.bulb });
 
   scene
     .slab("charger.box", CHARGER, 0, CHARGER_H, { tone: "mid", bevel: 0.8, focus: "charger" })
@@ -139,14 +145,15 @@ function section(scene) {
   const pores = [];
   for (let column = 0; column < 30; column++) pores.push(face(x0 + 1.2 + column * 2.05, separator.z + separator.h / 2));
   scene.slab(copper.name, STACK, copper.z, copper.h, { tone: copper.tone, crease: "lo", focus: "section", steps: 2 });
-  scene.slab(anode.name, STACK, anode.z, anode.h, { tone: anode.tone, crease: "lo", focus: "section", steps: 2 }).line(sheets, { tone: "faint" });
-  scene.slab(separator.name, STACK, separator.z, separator.h, { tone: separator.tone, crease: "lo", focus: "section", steps: 2 }).dots(pores, { size: 0.3, tone: "lo" });
-  scene.slab(cathode.name, STACK, cathode.z, cathode.h, { tone: cathode.tone, crease: "lo", focus: "section", steps: 2 }).dots(grains, { size: 0.55, tone: "lo" });
+  const layer = (piece) => ({ crease: "lo", focus: "section", steps: 2, piece, move: MOVES[piece] });
+  scene.slab(anode.name, STACK, anode.z, anode.h, { tone: anode.tone, ...layer("anode") }).line(sheets, { tone: "faint" });
+  scene.slab(separator.name, STACK, separator.z, separator.h, { tone: separator.tone, ...layer("separator") }).dots(pores, { size: 0.3, tone: "lo" });
+  scene.slab(cathode.name, STACK, cathode.z, cathode.h, { tone: cathode.tone, ...layer("cathode") }).dots(grains, { size: 0.55, tone: "lo" });
   scene
-    .slab(aluminium.name, STACK, aluminium.z, aluminium.h, { tone: aluminium.tone, crease: "lo", focus: "section", steps: 2 })
+    .slab(aluminium.name, STACK, aluminium.z, aluminium.h, { tone: aluminium.tone, ...layer("aluminium") })
     .line(k.planOutline(k.insetPlan(STACK, 3), aluminium.z + aluminium.h, P), { tone: "faint" });
   scene.slab("section.tab", { x: x0 - 8, y: STACK.y + 8, w: 8, d: 10, r: 0.4 }, copper.z, copper.h, { tone: "mid", focus: "section", steps: 2 });
-  scene.slab("section.tab", { x: x1, y: STACK.y + 22, w: 8, d: 10, r: 0.4 }, aluminium.z, aluminium.h, { tone: "mid", focus: "section", steps: 2 });
+  scene.slab("section.tab", { x: x1, y: STACK.y + 22, w: 8, d: 10, r: 0.4 }, aluminium.z, aluminium.h, { tone: "mid", ...layer("aluminium") });
 }
 
 export function ionSlots() {
@@ -169,6 +176,7 @@ function buildBattery() {
 
 export const SCENE = { P, items: buildBattery() };
 export const ITEMS = orderScene(SCENE.items, ORDER);
+export const EXPLODE = explodeOf(P, MOVES);
 export const SWITCH_SHIFT = Object.fromEntries(Object.entries(SWITCH_STOPS).map(([mode, x]) => [mode, k.translateAlong(P, [x - SWITCH_STOPS.off, 0, 0])]));
 export const BULB_SCREEN = { centre: at(BULB), radius: G.scaleOf(P) * BULB_R * 2.4 };
 export const CHARGER_LED = at([CHARGER.x + 6, CHARGER.y + 9, CHARGER_H]);

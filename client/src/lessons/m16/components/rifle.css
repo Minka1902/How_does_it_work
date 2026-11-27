@@ -1,3 +1,7 @@
 .rifle [data-gas="off"] .iso-line[data-flow] {
   opacity: 0;
 }
+
+.rifle [data-apart] .rifle-moving {
+  opacity: 0;
+}

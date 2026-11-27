@@ -1,4 +1,6 @@
 import { lazy } from "react";
+import { LANGUAGES } from "../i18n";
+import { isolateMeasures, mapStrings } from "../lesson-kit/format";
 
 const SLUG = /\/lessons\/([^/]+)\//;
 const LANGUAGE = /\/text\/(\w+)\.js$/;
@@ -15,7 +17,8 @@ export function buildRegistry({ metas, texts, lessons, previews }) {
   }
   for (const [path, text] of Object.entries(texts)) {
     const lesson = bySlug.get(slugOf(path));
-    if (lesson) lesson.text[path.match(LANGUAGE)[1]] = text;
+    const language = path.match(LANGUAGE)[1];
+    if (lesson) lesson.text[language] = LANGUAGES[language]?.dir === "rtl" ? mapStrings(text, isolateMeasures) : text;
   }
   return [...bySlug.values()].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.slug.localeCompare(b.slug));
 }

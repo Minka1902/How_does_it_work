@@ -11,7 +11,11 @@ export default {
     title: "__TITLE__",
     hint: "פקדים למטה",
     label: "תיאור האובייקט ומה האיור מראה.",
-    readout: "{value}",
+    readout: "הקשות: {value}",
+    parts: {
+      base: { name: "בסיס", body: "שורה אחת על מה שהחלק הזה עושה.", step: "overview" },
+      part: { name: "חלק", body: "שורה אחת על מה שהחלק הזה עושה. הקישו עליו כדי לנסות.", step: "detail" },
+    },
     keys: [{ mark: "lit", label: "החלק שהשלב הזה עוסק בו" }],
     caption: "המספרים האמיתיים שמאחורי האיור.",
   },

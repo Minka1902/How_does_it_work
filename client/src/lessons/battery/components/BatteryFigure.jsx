@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { Dots, IsoFigure, Plate } from "../../../anatomy/react/draw";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Dots } from "../../../anatomy/react/draw";
 import { follow, useInView, useLoop, useReadout } from "../../../anatomy/react/live";
-import { AnatomyFigure } from "../../../lesson-kit/anatomy/AnatomyFigure";
-import { SceneView } from "../../../lesson-kit/anatomy/SceneView";
+import { alongAxis } from "../../../lesson-kit/anatomy/drag";
+import { InteractiveFigure } from "../../../lesson-kit/anatomy/InteractiveFigure";
 import { SegmentedControl } from "../../../lesson-kit/controls/SegmentedControl";
 import { Slider } from "../../../lesson-kit/controls/Slider";
 import { fill } from "../../../lesson-kit/format";
 import { usePreferences } from "../../../hooks/usePreferences";
-import { BULB_SCREEN, CHARGER_LED, HEIGHT, ITEMS, SWITCH_SHIFT, WIDTH, ionSlots } from "../figure/geometry";
+import { BULB_SCREEN, CHARGER_LED, EXPLODE, HEIGHT, ITEMS, P, SWITCH_SHIFT, SWITCH_STOPS, WIDTH, ionSlots } from "../figure/geometry";
 import { CURRENT_MAX, CURRENT_MIN, IONS, STEP_FOCUS, STEP_MODE, initialState, ionsInAnode, stepBattery } from "../figure/model";
 import "./battery.css";
 
@@ -28,20 +28,22 @@ function readoutOf(text, model, mode) {
   return fill(text.readout, { volts: model.volts.toFixed(2), soc: Math.round(model.soc * 100), state: fill(text.states[state], { amps: Math.abs(model.current).toFixed(1) }) });
 }
 
+const nearestStop = (x) => Object.entries(SWITCH_STOPS).reduce((best, entry) => (Math.abs(entry[1] - x) < Math.abs(best[1] - x) ? entry : best))[0];
+
 const ionPoint = (index, t) => [SLOTS.anode[index][0] + (SLOTS.cathode[index][0] - SLOTS.anode[index][0]) * t, SLOTS.anode[index][1] + (SLOTS.cathode[index][1] - SLOTS.anode[index][1]) * t];
 
-export function BatteryFigure({ text, step = null, still = false, interactive = true }) {
+export function BatteryFigure({ text, step = null, goTo, still = false, interactive = true }) {
   const { still: calmPreference } = usePreferences();
   const [mode, setMode] = useState("discharge");
   const [amps, setAmps] = useState(1.5);
   const [state, setState] = useState("discharge");
   const model = useRef(initialState());
   const ions = useRef(Array.from({ length: IONS }, (_, index) => (index < ionsInAnode(model.current.soc) ? 0 : 1)));
+  const [whole, setWhole] = useState(true);
   const dots = useRef([]);
-  const stage = useRef(null);
   const { anchor, say } = useReadout();
-  const inView = useInView(stage);
-  const live = !still && !calmPreference && inView;
+  const inView = useInView(anchor);
+  const live = !still && !calmPreference && inView && whole;
 
   const place = () => {
     ions.current.forEach((t, index) => {
@@ -52,6 +54,15 @@ export function BatteryFigure({ text, step = null, still = false, interactive = 
       node.setAttribute("cy", y.toFixed(1));
     });
   };
+
+  const handles = useMemo(
+    () => ({
+      switch: { begin: () => SWITCH_STOPS[mode], drag: ({ dx, dy, context }) => setMode(nearestStop(context + alongAxis(P, [1, 0, 0], dx, dy))) },
+      lamp: { click: () => setMode("discharge") },
+      charger: { click: () => setMode("charge") },
+    }),
+    [mode],
+  );
 
   useLoop((dt, calm) => {
     model.current = stepBattery(model.current, mode, amps, dt);
@@ -74,7 +85,6 @@ export function BatteryFigure({ text, step = null, still = false, interactive = 
     say(readoutOf(text, model.current, mode));
   }, [mode, text, say]);
 
-
   const controls = interactive ? (
     <>
       <SegmentedControl label={text.mode} value={mode} onChange={setMode} options={MODES.map((value) => ({ value, label: text.modes[value] }))} />
@@ -83,29 +93,37 @@ export function BatteryFigure({ text, step = null, still = false, interactive = 
   ) : null;
 
   return (
-    <AnatomyFigure className="battery" controls={controls}>
-      <div ref={stage} data-current={state}>
-        <Plate fig={text.fig} title={text.title} hint={text.hint} readout={readoutOf(text, model.current, mode)} keys={still ? [] : text.keys} caption={still ? null : text.caption}>
-          <div ref={anchor}>
-            <IsoFigure width={WIDTH} height={HEIGHT} label={text.label}>
-              <defs>
-                <radialGradient id="battery-glow">
-                  <stop offset="0" className="battery-glow-core" />
-                  <stop offset="1" className="battery-glow-edge" />
-                </radialGradient>
-              </defs>
-              <SceneView items={ITEMS} focus={step ? STEP_FOCUS[step] : null} transforms={{ switch: SWITCH_SHIFT[mode] }} />
-              <circle className="battery-glow" cx={BULB_SCREEN.centre[0]} cy={BULB_SCREEN.centre[1]} r={BULB_SCREEN.radius} fill="url(#battery-glow)" />
-              <Dots points={[CHARGER_LED]} size={1} tone={state === "charge" ? "hi" : "faint"} />
-              <g className="battery-ions">
-                {SLOTS.anode.map((_, index) => (
-                  <circle key={index} ref={(node) => (dots.current[index] = node)} r="1.25" cx={ionPoint(index, ions.current[index])[0]} cy={ionPoint(index, ions.current[index])[1]} />
-                ))}
-              </g>
-            </IsoFigure>
-          </div>
-        </Plate>
-      </div>
-    </AnatomyFigure>
+    <InteractiveFigure
+      className="battery"
+      text={text}
+      width={WIDTH}
+      height={HEIGHT}
+      items={ITEMS}
+      explode={EXPLODE}
+      stepFocus={step ? STEP_FOCUS[step] : null}
+      goTo={goTo}
+      handles={interactive ? handles : undefined}
+      controls={controls}
+      readout={readoutOf(text, model.current, mode)}
+      anchor={anchor}
+      still={still}
+      data={{ "data-current": state }}
+      transforms={{ switch: SWITCH_SHIFT[mode] }}
+      onAssembled={setWhole}
+      defs={
+        <radialGradient id="battery-glow">
+          <stop offset="0" className="battery-glow-core" />
+          <stop offset="1" className="battery-glow-edge" />
+        </radialGradient>
+      }
+    >
+      <circle data-piece="bulb" className="battery-glow" cx={BULB_SCREEN.centre[0]} cy={BULB_SCREEN.centre[1]} r={BULB_SCREEN.radius} fill="url(#battery-glow)" />
+      <Dots points={[CHARGER_LED]} size={1} tone={state === "charge" ? "hi" : "faint"} />
+      <g className="battery-ions">
+        {SLOTS.anode.map((_, index) => (
+          <circle key={index} ref={(node) => (dots.current[index] = node)} r="1.25" cx={ionPoint(index, ions.current[index])[0]} cy={ionPoint(index, ions.current[index])[1]} />
+        ))}
+      </g>
+    </InteractiveFigure>
   );
 }

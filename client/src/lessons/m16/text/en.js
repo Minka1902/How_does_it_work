@@ -69,9 +69,17 @@ export default {
     },
   ],
   figure: {
+    parts: {
+      barrel: { name: "Barrel", body: "Holds the cartridge in its chamber and guides the bullet. Its extension has the lugs the bolt locks into.", step: "fire" },
+      gas: { name: "Gas block, tube and key", body: "Tap gas from behind the bullet and pipe it back into the bolt carrier.", step: "gas" },
+      bolt: { name: "Bolt carrier and bolt", body: "Drag it back and let go: the spring runs the rest of the cycle. The cam pin turns the bolt 22.5°.", step: "unlock" },
+      buffer: { name: "Buffer and action spring", body: "Soak up the carrier's energy at the back and push it forward again.", step: "cock" },
+      magazine: { name: "Magazine", body: "Its spring lifts the next round up for the bolt to strip off and push into the chamber.", step: "feed" },
+      receiver: { name: "Receiver (cut away)", body: "The body that holds everything; its near half is cut away so you can see inside.", step: "fire" },
+    },
     fig: "Fig 3",
     title: "Gas-operated action",
-    hint: "Play, or drag the cycle below",
+    hint: "Tap a part · drag the bolt carrier",
     label: "A cutaway display of an M16 action on a stand: barrel with gas block and gas tube, bolt carrier with gas key, rotating bolt and cam pin, buffer and action spring, and a magazine.",
     readout: "{phase} · carrier {mm} mm · bolt {deg}° · {ms} ms",
     phases: { fire: "Fire", gas: "Gas", unlock: "Unlock", extract: "Extract", eject: "Eject", cock: "Buffer stop", feed: "Feed", lock: "Lock", ready: "Ready" },

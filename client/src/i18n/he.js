@@ -45,6 +45,11 @@ export default {
   "prefs.reset": "איפוס לברירת המחדל",
   "notFound.title": "אין כאן כלום",
   "notFound.body": "העמוד שפתחת לא קיים.",
+  "parts.label": "חלקים",
+  "parts.go": "הראו לי בשיעור",
+  "parts.close": "סגירה",
+  "parts.apart": "פירוק",
+  "parts.together": "הרכבה",
   "control.play": "הפעלה",
   "control.pause": "השהיה",
 };

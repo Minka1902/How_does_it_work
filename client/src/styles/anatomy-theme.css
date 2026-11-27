@@ -50,3 +50,8 @@
 .hiiw-figure .iso-figure {
   margin: 0;
 }
+
+.hiiw-cavity-fill {
+  fill: var(--anatomy-shade-0);
+  stroke: none;
+}

@@ -1,6 +1,7 @@
 import * as k from "../../../anatomy/iso-kit.mjs";
 import * as G from "../../../anatomy/lathe.mjs";
 import { orderScene } from "../../../lesson-kit/anatomy/order.js";
+import { explodeOf } from "../../../lesson-kit/anatomy/explode.js";
 import { createScene } from "../../../lesson-kit/anatomy/scene.js";
 import ORDER from "./order.js";
 
@@ -32,6 +33,7 @@ const ROUND = 34;
 const CASE_R = 2.9;
 export const ROUND_LOW = LOWER_TOP + 2.75;
 const GAS_R = 0.9;
+const MOVES = { magazine: [0, 32, 0], barrel: [40, 0, 8], carrier: [0, 30, 0], buffer: [0, 22, 0] };
 
 export const P = k.fitProjection([...k.boxCorners(BASE, -14, 0), ...k.boxCorners({ x: -116, y: -10, w: 316, d: 50, r: 0 }, 0, ZB + 15)], WIDTH, HEIGHT, { pad: 16, azimuth: AZIMUTH, elevation: ELEVATION });
 
@@ -67,20 +69,23 @@ function stand(scene) {
 
 function receiver(scene) {
   scene.layer(1);
-  scene.slab("receiver.wall", { x: CHANNEL.to, y: WALL_Y, w: NUT.from - CHANNEL.to, d: 2, r: 0.5 }, LOWER_TOP, ZB + 14 - LOWER_TOP, { tone: "lo", seams: [ZB - 4] });
-  scene.slab("receiver.extension", { x: CHANNEL.from, y: WALL_Y, w: CHANNEL.to - CHANNEL.from, d: 2, r: 0.5 }, ZB - 10, 20, { tone: "lo" });
-  scene.slab("receiver.extension", { x: CHANNEL.from, y: WALL_Y + 2, w: CHANNEL.to - CHANNEL.from, d: 18, r: 0.5 }, ZB - 12, 2, { tone: "lo" });
-  scene.slab("receiver.extension", { x: CHANNEL.from - 4, y: WALL_Y, w: 4, d: 20, r: 0.6 }, ZB - 12, 22, { tone: "mid", bevel: 0.4 });
-  scene.slab("receiver.lower", { x: -30, y: -9, w: MAG.x - 1 + 30, d: 18, r: 1 }, ZB - 26, 12, { tone: "mid", bevel: 0.6 });
-  scene.slab("receiver.lower", { x: MAG.x + MAG.w + 1, y: -9, w: 34 - MAG.x - MAG.w - 1, d: 18, r: 1 }, ZB - 26, 12, { tone: "mid", bevel: 0.6 });
+  scene.slab("receiver.wall", { x: CHANNEL.to, y: WALL_Y, w: NUT.from - CHANNEL.to, d: 2, r: 0.5 }, LOWER_TOP, ZB + 14 - LOWER_TOP, { tone: "lo", seams: [ZB - 4], focus: "receiver" });
+  scene.slab("receiver.extension", { x: CHANNEL.from, y: WALL_Y, w: CHANNEL.to - CHANNEL.from, d: 2, r: 0.5 }, ZB - 10, 20, { tone: "lo", focus: "receiver" });
+  scene.slab("receiver.extension", { x: CHANNEL.from, y: WALL_Y + 2, w: CHANNEL.to - CHANNEL.from, d: 18, r: 0.5 }, ZB - 12, 2, { tone: "lo", focus: "receiver" });
+  scene.slab("receiver.extension", { x: CHANNEL.from - 4, y: WALL_Y, w: 4, d: 20, r: 0.6 }, ZB - 12, 22, { tone: "mid", bevel: 0.4, focus: "receiver" });
+  scene.slab("receiver.lower", { x: -30, y: -9, w: MAG.x - 1 + 30, d: 18, r: 1 }, ZB - 26, 12, { tone: "mid", bevel: 0.6, focus: "receiver" });
+  scene.slab("receiver.lower", { x: MAG.x + MAG.w + 1, y: -9, w: 34 - MAG.x - MAG.w - 1, d: 18, r: 1 }, ZB - 26, 12, { tone: "mid", bevel: 0.6, focus: "receiver" });
+  scene.assembly("magazine", MOVES.magazine);
   scene
     .slab("magazine.body", MAG, 3, LOWER_TOP - 3, { tone: "mid", focus: "magazine", seams: [12, LOWER_TOP - 6] })
     .line([0.3, 0.5, 0.7].map((share) => k.pathOf([at([MAG.x + 3, MAG.y + MAG.d, 12 + share * (LOWER_TOP - 18)]), at([MAG.x + MAG.w - 3, MAG.y + MAG.d, 12 + share * (LOWER_TOP - 18)])])).join(""), { tone: "faint", free: true });
   scene.turned("magazine.round", [MAG_CENTRE - ROUND / 2, 0, ROUND_LOW], [1, 0, 0], [...CASE_PROFILE, ...BULLET_PROFILE.map(([s, r, smooth]) => (smooth ? [CASE + s, r, 1] : [CASE + s, r]))], { tone: "hi", focus: "magazine" });
+  scene.assembly(null);
 }
 
 function barrel(scene) {
   scene.layer(1);
+  scene.assembly("barrel", MOVES.barrel);
   const { name, origin, profile } = along("barrel.extension", EXTENSION.from, EXTENSION.to, EXTENSION.r);
   scene.turned(name, origin, [1, 0, 0], profile, { tone: "mid", focus: "barrel" });
   scene.turned("barrel.nut", [NUT.from, 0, ZB], [1, 0, 0], [[0, NUT.r], [NUT.to - NUT.from, NUT.r]], { tone: "mid", focus: "barrel", seams: [[3, NUT.r]] });
@@ -90,18 +95,21 @@ function barrel(scene) {
     .turned("barrel.tube", [GAS_BLOCK.x + GAS_BLOCK.w, 0, ZB], [1, 0, 0], [[0, BARREL.r], [BARREL.to - GAS_BLOCK.x - GAS_BLOCK.w, BARREL.r]], { tone: "hi", focus: "barrel" })
     .line(G.circleOf(F, BARREL.to - BARREL.from, 1.65, P), { tone: "lo" });
   scene.slab("gas.block", { x: GAS_BLOCK.x, y: -6, w: GAS_BLOCK.w, d: 12, r: 1.2 }, ZB - 6, GAS_Z + 3 - (ZB - 6), { tone: "mid", bevel: 0.5, focus: "gas" }).dots([at([GAS_BLOCK.x + 3, 6, GAS_Z]), at([GAS_BLOCK.x + 9, 6, ZB - 3])], { size: 0.45 });
-  scene.pipe("gas.tube", [[GAS_BLOCK.x, 0, GAS_Z], [KEY.x + KEY.w, 0, GAS_Z]], GAS_R, { raw: true, focus: "gas", flow: "red", tone: "mid", maxLength: 30 });
+  scene.pipe("gas.tube", [[GAS_BLOCK.x, 0, GAS_Z], [KEY.x + KEY.w, 0, GAS_Z]], GAS_R, { raw: true, focus: "gas", flow: "red", tone: "mid", maxLength: 30, free: [false, true] });
+  scene.assembly(null);
 }
 
 function carrier(scene) {
   scene.layer(1);
   scene.group("carrier");
+  scene.assembly("carrier", MOVES.carrier);
   scene.turned("carrier.body", [CARRIER.from, 0, ZB], [1, 0, 0], [[0, CARRIER.r - 0.8], [0.8, CARRIER.r], [CARRIER.to - CARRIER.from, CARRIER.r]], { tone: "hi", focus: "bolt", seams: [[14, CARRIER.r], [36, CARRIER.r]] });
   scene.turned("carrier.bolt", [CARRIER.to, 0, ZB], [1, 0, 0], [[0, BOLT_R], [BOLT_FACE - CARRIER.to, BOLT_R]], { tone: "mid", focus: "bolt" });
   scene.slab("carrier.key", { x: KEY.x, y: -2.2, w: KEY.w, d: 4.4, r: 0.6 }, KEY.z0, KEY.z1 - KEY.z0, { tone: "mid", bevel: 0.3, focus: "gas" }).dots([at([KEY.x + 3.5, 0, KEY.z1]), at([KEY.x + KEY.w - 3.5, 0, KEY.z1])], { size: 0.4 });
-  scene.turned("carrier.buffer", [BUFFER.from, 0, ZB], [1, 0, 0], [[0, BUFFER.r - 1], [1, BUFFER.r], [BUFFER.to - BUFFER.from, BUFFER.r]], { tone: "mid", focus: "buffer", seams: [[8, BUFFER.r]] });
+  scene.turned("carrier.buffer", [BUFFER.from, 0, ZB], [1, 0, 0], [[0, BUFFER.r - 1], [1, BUFFER.r], [BUFFER.to - BUFFER.from, BUFFER.r]], { tone: "mid", focus: "buffer", seams: [[8, BUFFER.r]], piece: "buffer", move: MOVES.buffer });
   scene.group("pin");
   scene.turned("carrier.pin", [PIN.x, CARRIER.r - 1, ZB], [0, 1, 0], [[0, PIN.r], [PIN.out - CARRIER.r + 1, PIN.r]], { tone: "hi", focus: "bolt" });
+  scene.assembly(null);
   scene.group(null);
 }
 
@@ -117,6 +125,7 @@ function buildRifle() {
 export const SCENE = { P, items: buildRifle() };
 export const ITEMS = orderScene(SCENE.items, ORDER);
 
+export const EXPLODE = explodeOf(P, MOVES);
 export const shift = (dx, dy = 0, dz = 0) => k.translateAlong(P, [dx, dy, dz]);
 
 export function pinShift(carrierX, degrees) {
