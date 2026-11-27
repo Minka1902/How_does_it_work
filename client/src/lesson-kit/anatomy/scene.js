@@ -8,6 +8,7 @@ const BEND = 2.6;
 function decorate(item) {
   item.line = (d, style = {}) => (d && item.draw.push({ type: "line", d, tone: "lo", ...style }), item);
   item.dots = (points, style = {}) => (points.length && item.draw.push({ type: "dots", points, size: 0.5, tone: "mid", ...style }), item);
+  item.cavity = (front, back) => (item.draw.push({ type: "cavity", front, back }), item);
   item.faded = (list, style = {}) => (item.draw.push({ type: "faded", list: list.filter(({ alpha }) => alpha >= 0.02), tone: "lo", ...style }), item);
   return item;
 }

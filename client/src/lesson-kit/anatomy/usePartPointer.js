@@ -66,18 +66,18 @@ export function usePartPointer(rootRef, handles = {}) {
     if (active.moved) {
       active.handle.end?.();
       event.preventDefault();
-    } else if (active.handle.click) active.handle.click();
+    } else if (active.handle.click) active.handle.click({ point: toSvgPoint(rootRef.current, event.clientX, event.clientY) });
     else setPinned({ id: active.id, at: local(event) });
-  }, []);
+  }, [rootRef]);
 
   const onClick = useCallback(
     (event) => {
       const id = partAt(event.target);
       if (id && handles[id]?.drag) return;
-      if (id && handles[id]?.click) return handles[id].click();
+      if (id && handles[id]?.click) return handles[id].click({ point: toSvgPoint(rootRef.current, event.clientX, event.clientY) });
       setPinned(id ? { id, at: local(event) } : null);
     },
-    [handles],
+    [handles, rootRef],
   );
 
   const onPointerLeave = useCallback(() => setHovered(null), []);

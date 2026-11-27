@@ -40,7 +40,7 @@ export function platePaths(F, polygon, s0, s1, P) {
     if (!side.seen) continue;
     const d = facePath(side.points, P);
     fill.push(d);
-    shades[G.toneOf(side.normal, P)] += d;
+    shades[Math.min(3, G.toneOf(side.normal, P))] += d;
   }
   const top = caps.filter((cap) => cap.seen).map((cap) => facePath(cap.points, P)).join("");
   if (top) fill.push(top);

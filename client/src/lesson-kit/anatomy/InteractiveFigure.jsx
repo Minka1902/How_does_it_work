@@ -83,7 +83,7 @@ export function InteractiveFigure({
             <IsoFigure width={width} height={height} label={text.label}>
               {defs ? <defs>{defs}</defs> : null}
               <SceneView items={items} focus={focus} transforms={transforms} />
-              {children}
+              {typeof children === "function" ? children(focus) : children}
             </IsoFigure>
           </div>
         </Plate>

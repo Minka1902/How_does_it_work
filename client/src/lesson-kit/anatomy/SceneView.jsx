@@ -9,6 +9,14 @@ function Draw({ draw, lit }) {
     );
   if (draw.type === "line") return <Line d={draw.d} tone={lit && draw.tone !== "faint" ? "lit" : draw.tone} free={draw.free} flow={draw.flow} dotted={draw.dotted} />;
   if (draw.type === "dots") return <Dots points={draw.points} size={draw.size} tone={draw.tone} />;
+  if (draw.type === "cavity")
+    return (
+      <g className="hiiw-cavity">
+        <path className="hiiw-cavity-fill" d={draw.front} />
+        <path className="iso-line" data-tone="faint" d={draw.back} />
+        <path className="iso-line" data-tone={lit ? "lit" : "lo"} d={draw.front} />
+      </g>
+    );
   if (draw.type === "faded")
     return draw.list.map(({ d, alpha }, index) => (
       <g key={index} opacity={alpha < 1 ? alpha.toFixed(2) : undefined}>
