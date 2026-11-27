@@ -1,17 +1,29 @@
-import { IsoFigure, Plate } from "../../../anatomy/react/draw";
-import { AnatomyFigure } from "../../../lesson-kit/anatomy/AnatomyFigure";
-import { SceneView } from "../../../lesson-kit/anatomy/SceneView";
-import { HEIGHT, ITEMS, WIDTH } from "../figure/geometry";
+import { useState } from "react";
+import { useReadout } from "../../../anatomy/react/live";
+import { InteractiveFigure } from "../../../lesson-kit/anatomy/InteractiveFigure";
+import { fill } from "../../../lesson-kit/format";
+import { EXPLODE, HEIGHT, ITEMS, WIDTH } from "../figure/geometry";
 import { STEP_FOCUS } from "../figure/model";
 
-export function __NAME__Figure({ text, step = null, still = false }) {
+export function __NAME__Figure({ text, step = null, goTo, still = false, interactive = true }) {
+  const [presses, setPresses] = useState(0);
+  const { anchor } = useReadout();
+  const handles = { part: { click: () => setPresses((value) => value + 1) } };
+
   return (
-    <AnatomyFigure>
-      <Plate fig={text.fig} title={text.title} hint={text.hint} readout={text.readout} keys={still ? [] : text.keys} caption={still ? null : text.caption}>
-        <IsoFigure width={WIDTH} height={HEIGHT} label={text.label}>
-          <SceneView items={ITEMS} focus={step ? STEP_FOCUS[step] : null} />
-        </IsoFigure>
-      </Plate>
-    </AnatomyFigure>
+    <InteractiveFigure
+      className="__SLUG__"
+      text={text}
+      width={WIDTH}
+      height={HEIGHT}
+      items={ITEMS}
+      explode={EXPLODE}
+      stepFocus={step ? STEP_FOCUS[step] : null}
+      goTo={goTo}
+      handles={interactive ? handles : undefined}
+      readout={fill(text.readout, { value: presses })}
+      anchor={anchor}
+      still={still}
+    />
   );
 }
