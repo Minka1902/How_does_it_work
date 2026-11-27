@@ -61,6 +61,7 @@ export default {
     readout: "⁦{ring}×{cog}⁩ · יחס {ratio} · {speed} קמ״ש ב־{cadence} סל״ד",
     gear: "גלגל",
     cadence: "קצב דיווש",
+    cadenceUnit: "סל״ד",
     parts: {
       crank: { name: "קראנק ודוושה", body: "המנוף שכף הרגל דוחפת סביב. גררו כדי לדווש ביד.", step: "drive" },
       ring: { name: "גלגל שיניים קדמי", body: "42 שיניים, כל אחת מושכת את השרשרת חוליה אחת.", step: "ratio" },

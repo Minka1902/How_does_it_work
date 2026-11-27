@@ -830,3 +830,11 @@ select {
     flex: none;
   }
 }
+
+@media (max-width: 560px) {
+  .iso-plate-corner[data-corner="hint"] {
+    right: 0;
+    line-height: 1.4;
+    white-space: normal;
+  }
+}

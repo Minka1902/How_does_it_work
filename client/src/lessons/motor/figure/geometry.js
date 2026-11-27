@@ -75,7 +75,7 @@ export function rotorPaths(angle) {
     lamination: platePaths(FACE, laminationOutline(angle), STACK.y0, STACK.y1, P),
     coils: Array.from({ length: POLES }, (_, index) => platePaths(FACE, coilOutline(angle + (index * 2 * Math.PI) / POLES), COIL.y0, COIL.y1, P)),
     segments: Array.from({ length: POLES }, (_, index) => platePaths(FACE, segmentOutline(angle, index), COMMUTATOR.y0, COMMUTATOR.y1, P)),
-    mark: k.pathOf([at([0, STACK.y1, ZC]), at([HUB * Math.cos(angle), STACK.y1, ZC + HUB * Math.sin(angle)])]),
+    mark: k.pathOf([at([SHAFT_R * Math.cos(angle), STACK.y1, ZC + SHAFT_R * Math.sin(angle)]), at([HUB * Math.cos(angle), STACK.y1, ZC + HUB * Math.sin(angle)])]),
   };
 }
 

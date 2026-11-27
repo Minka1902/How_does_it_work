@@ -61,6 +61,7 @@ export default {
     readout: "{ring}×{cog} · ratio {ratio} · {speed} km/h at {cadence} rpm",
     gear: "Cog",
     cadence: "Cadence",
+    cadenceUnit: "rpm",
     parts: {
       crank: { name: "Crank and pedal", body: "The lever your foot pushes round. Drag it to pedal by hand.", step: "drive" },
       ring: { name: "Chainring", body: "42 teeth, each one pulling the chain along one link.", step: "ratio" },

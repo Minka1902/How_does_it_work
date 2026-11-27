@@ -94,8 +94,8 @@ function holder(scene) {
   const spring = k.coil(CELL_END, MINUS.x, [CELL_Y, CELL_Z], 5.4, 3, "x", P);
   scene
     .mark("holder.spring", [CELL_END + 1.5, CELL_Y, CELL_Z], { shape: { type: "solid", origin: [CELL_END, CELL_Y, CELL_Z], axis: [1, 0, 0], profile: [[0, 5.8], [MINUS.x - CELL_END, 5.8]] } })
-    .line(spring.back, { tone: "lo", free: "end" })
-    .line(spring.front, { tone: "mid", free: "end" });
+    .line(spring.back, { tone: "lo", free: true })
+    .line(spring.front, { tone: "mid", free: true });
 }
 
 function circuit(scene) {

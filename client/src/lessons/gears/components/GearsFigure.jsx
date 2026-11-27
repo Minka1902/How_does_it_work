@@ -121,7 +121,7 @@ export function GearsFigure({ text, step = null, goTo, still = false, interactiv
   const controls = interactive ? (
     <>
       <SegmentedControl label={text.gear} value={target} onChange={setTarget} options={GEARS} />
-      <Slider label={text.cadence} value={cadence} min={0} max={CADENCE_MAX} step={5} onChange={setCadence} format={(value) => `${value} rpm`} />
+      <Slider label={text.cadence} value={cadence} min={0} max={CADENCE_MAX} step={5} onChange={setCadence} format={(value) => `${value} ${text.cadenceUnit}`} />
     </>
   ) : null;
 
