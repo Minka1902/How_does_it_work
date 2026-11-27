@@ -45,3 +45,11 @@
   stroke: var(--anatomy-paper);
   stroke-width: 0.5;
 }
+
+.battery [data-apart] .battery-ions {
+  opacity: 0;
+}
+
+.battery-ions {
+  transition: opacity 300ms var(--ease);
+}

@@ -4,7 +4,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import * as A from "../.claude/skills/anatomy/kit/audit.mjs";
 import { frameAlong, unit3 } from "../client/src/anatomy/lathe.mjs";
 import { signatureOf } from "../client/src/lesson-kit/anatomy/order.js";
-import { sortScene } from "../client/src/lesson-kit/anatomy/scene.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LESSONS = join(ROOT, "client/src/lessons");
@@ -18,36 +17,39 @@ function shapeOf(shape, meta) {
   if (shape.type === "cylinder") return A.cylinder(shape.cx, shape.cy, shape.r, shape.z, shape.h, meta);
   if (shape.type === "solid") return A.solid(frameAlong(shape.origin, unit3(shape.axis)), shape.profile, meta);
   if (shape.type === "ball") return A.ball(shape.centre, shape.r, meta);
+  if (shape.type === "prism") return A.prism(shape.F, shape.polygon, shape.s0, shape.s1, meta);
   return null;
 }
 
 async function auditLesson(slug) {
   const file = join(LESSONS, slug, "figure/geometry.js");
   if (!existsSync(file)) return null;
-  const { SCENE } = await import(pathToFileURL(file).href);
+  const { SCENE, EXPLODE, AUDIT = {} } = await import(pathToFileURL(file).href);
   const { P, items } = SCENE;
-  const rank = new Map(sortScene(items).map((item, index) => [item, index]));
-  const R = A.recorder(P);
+  const R = A.recorder(P, EXPLODE ? { order: EXPLODE.order, spring: EXPLODE.spring } : {});
 
   const decor = items.filter((item) => item.draw.every((draw) => draw.type === "halo"));
   const drawn = items.filter((item) => !decor.includes(item));
   for (const item of drawn) {
-    const meta = { name: item.name, owner: ownerOf(item.name), ...(item.name.startsWith("stand.") ? { ground: true } : {}) };
+    const meta = { name: item.name, owner: ownerOf(item.name), ...(item.name.startsWith("stand.") ? { ground: true } : {}), ...(item.seated ? { seated: true, cut: item.seated } : {}) };
+    const motion = { piece: item.piece ?? "", move: item.move ?? [0, 0, 0] };
     const shapes = [];
     for (const shape of item.shapes) {
-      if (shape.type === "route") R.route(shape.name, shape.route, shape.r, { limp: shape.limp, gaps: shape.gaps, touch: shape.touch, owner: shape.name });
+      if (shape.type === "route") R.route(shape.name, shape.route, shape.r, { limp: shape.limp, gaps: shape.gaps, touch: shape.touch, free: shape.free, owner: shape.name, ...motion });
       else shapes.push(R.solid(shapeOf(shape, meta)));
     }
     for (const draw of item.draw) if (draw.type === "tube") shapes.push(A.tube(draw.piece.points, draw.piece.radii, { ...meta, owner: item.name }));
-    R.put({ name: `${item.name}@${item.order}`, key: rank.get(item), shapes, ...(item.chunk === undefined ? {} : { route: item.name, chunk: item.chunk }) });
+    R.put({ name: `${item.name}@${item.order}`, key: item.depth, shapes, ...motion, ...(item.chunk === undefined ? {} : { route: item.name, chunk: item.chunk }) });
   }
 
-  A.settle(R, P, { states: [0] });
-  const settled = R.settled.items.map((item, index) => ({ index, key: item.key })).sort((a, b) => a.key - b.key || a.index - b.index);
-  const order = [...decor.map((item) => item.order), ...settled.map(({ index }) => drawn[index].order)];
-  writeFileSync(join(LESSONS, slug, "figure/order.js"), `export default ${JSON.stringify({ signature: signatureOf(items), order })};\n`);
+  if (EXPLODE) A.settle(R, P);
+  else A.settle(R, P, { states: [0] });
+  const keys = new Array(items.length).fill(0);
+  for (const item of decor) keys[item.order] = -1e6;
+  R.settled.items.forEach((item, index) => (keys[drawn[index].order] = Math.round(item.key * 1000) / 1000));
+  writeFileSync(join(LESSONS, slug, "figure/order.js"), `export default ${JSON.stringify({ signature: signatureOf(items), keys })};\n`);
 
-  const result = A.audit(R, P);
+  const result = A.audit(R, P, AUDIT);
   console.log(`\n## ${slug}\n${A.report(result)}`);
   const count = A.failures(result);
   console.log(count ? `${slug}: audit failed, ${count} problem${count === 1 ? "" : "s"}` : `${slug}: audit passed`);

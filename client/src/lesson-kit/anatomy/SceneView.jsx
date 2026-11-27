@@ -1,4 +1,4 @@
-import { Fragment, memo } from "react";
+import { memo } from "react";
 import { Dots, Line, Solid } from "../../anatomy/react/draw";
 
 function Draw({ draw, lit }) {
@@ -26,33 +26,28 @@ function Draw({ draw, lit }) {
   );
 }
 
-function Item({ item, focus }) {
+function Item({ item, focus, transform }) {
   const lit = item.focus !== null && item.focus === focus;
+  const body = item.draw.map((draw, index) => <Draw key={index} draw={draw} lit={lit} />);
   return (
-    <g data-part={item.name}>
-      {item.draw.map((draw, index) => (
-        <Draw key={index} draw={draw} lit={lit} />
-      ))}
+    <g data-item={item.order} data-part={item.name} data-focus={item.focus ?? undefined} data-piece={item.piece ?? undefined} data-key={item.key} data-lift={item.lift ? item.lift.toFixed(3) : undefined}>
+      {item.group ? (
+        <g data-group={item.group} transform={transform}>
+          {body}
+        </g>
+      ) : (
+        body
+      )}
     </g>
   );
 }
 
 export const SceneView = memo(function SceneView({ items, focus = null, transforms = {} }) {
-  const runs = [];
-  for (const item of items) {
-    const last = runs.at(-1);
-    if (last && last.group === item.group) last.items.push(item);
-    else runs.push({ group: item.group, items: [item] });
-  }
-
-  return runs.map((run, index) => {
-    const children = run.items.map((item) => <Item key={item.order} item={item} focus={focus} />);
-    return run.group ? (
-      <g key={index} data-group={run.group} transform={transforms[run.group]}>
-        {children}
-      </g>
-    ) : (
-      <Fragment key={index}>{children}</Fragment>
-    );
-  });
+  return (
+    <g data-scene="">
+      {items.map((item) => (
+        <Item key={item.order} item={item} focus={focus} transform={item.group ? transforms[item.group] : undefined} />
+      ))}
+    </g>
+  );
 });

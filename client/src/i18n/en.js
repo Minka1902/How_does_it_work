@@ -45,6 +45,11 @@ export default {
   "prefs.reset": "Reset to defaults",
   "notFound.title": "Nothing here",
   "notFound.body": "The page you opened doesn't exist.",
+  "parts.label": "Parts",
+  "parts.go": "Show me in the lesson",
+  "parts.close": "Close",
+  "parts.apart": "Take apart",
+  "parts.together": "Put together",
   "control.play": "Play",
   "control.pause": "Pause",
 };

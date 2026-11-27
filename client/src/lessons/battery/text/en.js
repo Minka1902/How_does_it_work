@@ -55,9 +55,17 @@ export default {
     },
   ],
   figure: {
+    parts: {
+      cell: { name: "18650 cell", body: "A steel can holding the rolled-up electrodes and electrolyte. 18 mm wide, 65 mm long.", step: "stored" },
+      section: { name: "Electrode slice (magnified)", body: "Copper foil, graphite, separator, metal oxide, aluminium foil: the layers rolled up inside the can.", step: "inside" },
+      switch: { name: "Slide switch", body: "Drag the knob: left charges, middle is off, right lights the lamp.", step: "electrons" },
+      circuit: { name: "Wires", body: "The outside path the electrons must take, because they can't cross the separator.", step: "electrons" },
+      lamp: { name: "Lamp", body: "Tap it to switch to the lamp. Its filament glows as current flows through it.", step: "electrons" },
+      charger: { name: "Charger", body: "Tap it to charge. It pushes electrons back into the negative side.", step: "charge" },
+    },
     fig: "Fig 2",
     title: "Li-ion cell",
-    hint: "Switch and current below",
+    hint: "Tap a part · drag the switch",
     label: "An 18650 lithium-ion cell in a holder on a bench, wired through a slide switch to a lamp or a charger, with a magnified slice of its electrode layers on a stand.",
     readout: "{volts} V · {soc} % · {state}",
     states: { discharge: "lamp {amps} A", charge: "charging {amps} A", off: "open circuit", empty: "empty, cut off", full: "full" },
