@@ -1,0 +1,40 @@
+.gears-chain path {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.gears-chain .gears-link-edge {
+  stroke: var(--anatomy-lo);
+}
+
+.gears-chain .gears-link-inner {
+  stroke: var(--anatomy-shade-0);
+}
+
+.gears-chain .gears-link-outer {
+  stroke: var(--anatomy-face);
+}
+
+.gears-chain .gears-pin {
+  fill: var(--anatomy-mid);
+}
+
+.gears-chain[data-lit] .gears-link-edge {
+  stroke: var(--anatomy-lit);
+}
+
+.gears-chain[data-lit] .gears-link-outer {
+  stroke: var(--anatomy-lit-top);
+}
+
+.gears [data-apart] .gears-chain {
+  display: none;
+}
+
+.iso-solid.gears-cog:not([data-lit]) > .iso-top {
+  fill: var(--anatomy-shade-2);
+}
+
+.iso-solid.gears-pulley:not([data-lit]) > .iso-top {
+  fill: var(--anatomy-shade-0);
+}

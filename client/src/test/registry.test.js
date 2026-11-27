@@ -7,7 +7,7 @@ const top = (query) => searchLessons(INDEX, LESSONS, query)[0]?.slug;
 
 describe("lesson registry", () => {
   it("finds every lesson folder with both languages and a lazy body", () => {
-    expect(LESSONS.map((lesson) => lesson.slug).sort()).toEqual(["battery", "fridge", "lock", "m16", "motor"]);
+    expect(LESSONS.map((lesson) => lesson.slug).sort()).toEqual(["battery", "fridge", "gears", "lock", "m16", "motor"]);
     for (const lesson of LESSONS) {
       expect(Object.keys(lesson.text).sort()).toEqual(["en", "he"]);
       expect(lesson.Body).toBeTruthy();

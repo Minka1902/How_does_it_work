@@ -4,6 +4,10 @@ import { initialState as batteryStart, openCircuit, stepBattery, FULL, EMPTY } f
 import { poseAt, TRAVEL, ROTATION } from "../lessons/m16/figure/model";
 import { canTurn, combinations, pinsAt, KEY_OUT, KEYS, SHEAR } from "../lessons/lock/figure/model";
 import { contacts, initialState as motorStart, noLoadRpm, rpmOf, spinByHand, stepMotor, torqueOf, K, RESISTANCE } from "../lessons/motor/figure/model";
+import { COGS, ratioOf, speedOf } from "../lessons/gears/figure/model";
+import { AXLE, LINKS, PITCH, RING_R, SPINDLE, cageAngle, chainAt, cogY } from "../lessons/gears/figure/drivetrain";
+import { P, planeOffset } from "../lessons/gears/figure/geometry";
+import * as k from "../anatomy/iso-kit.mjs";
 
 const run = (step, state, seconds, ...args) => {
   let next = state;
@@ -114,5 +118,57 @@ describe("motor model", () => {
       lit.add(coil.indexOf(1));
     }
     expect([...lit].filter((index) => index >= 0).sort()).toEqual([0, 1, 2]);
+  });
+});
+
+describe("gears model", () => {
+  it("turns 42 teeth into the gear ratio and road speed", () => {
+    expect(ratioOf(17)).toBeCloseTo(2.47, 2);
+    expect(speedOf(80, 28)).toBeCloseTo(15.1, 1);
+    expect(speedOf(80, 17)).toBeCloseTo(24.9, 1);
+    expect(speedOf(80, 11)).toBeCloseTo(38.5, 1);
+  });
+});
+
+describe("drivetrain", () => {
+  const gap = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+  it("keeps every link about one pitch long on every cog", () => {
+    COGS.forEach((_, gear) => {
+      const { rollers } = chainAt(gear, 0.7);
+      expect(rollers).toHaveLength(LINKS);
+      rollers.forEach((roller, index) => {
+        const length = gap(roller, rollers[(index + 1) % LINKS]);
+        expect(length).toBeGreaterThan(PITCH * 0.97);
+        expect(length).toBeLessThan(PITCH * 1.02);
+      });
+    });
+  });
+
+  it("swings the cage forward as the cogs get bigger", () => {
+    const angles = COGS.map((_, gear) => cageAngle(gear));
+    angles.slice(1).forEach((angle, index) => expect(angle).toBeLessThan(angles[index]));
+    expect(angles[0]).toBeLessThan(1.2);
+    expect(angles[COGS.length - 1]).toBeGreaterThan(-0.4);
+  });
+
+  it("seats the rollers in the chainring valleys as it turns", () => {
+    const step = (2 * Math.PI) / 42;
+    for (const crank of [0, 0.4, 2.9]) {
+      chainAt(3, crank)
+        .rollers.filter((roller) => roller.on === "ring")
+        .forEach((roller) => {
+          const off = (((roller.angle + crank) % step) + step) % step;
+          expect(Math.min(off, step - off)).toBeLessThan(1e-6);
+          expect(Math.hypot(roller.x - SPINDLE[0], roller.z - SPINDLE[1])).toBeCloseTo(RING_R);
+        });
+    }
+  });
+
+  it("maps a tap on the drawing back onto a cog's plane", () => {
+    const y = cogY(5);
+    const [x, z] = planeOffset(AXLE, y, k.iso([AXLE[0] - 6, y, AXLE[1] + 9], P));
+    expect(x).toBeCloseTo(-6);
+    expect(z).toBeCloseTo(9);
   });
 });
