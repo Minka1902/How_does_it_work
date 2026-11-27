@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as k from "../../../anatomy/iso-kit.mjs";
-import { Line, Solid } from "../../../anatomy/react/draw";
+import { Line } from "../../../anatomy/react/draw";
 import { follow, useLoop, useReadout } from "../../../anatomy/react/live";
 import { alongAxis, clamp } from "../../../lesson-kit/anatomy/drag";
 import { InteractiveFigure } from "../../../lesson-kit/anatomy/InteractiveFigure";
+import { LayeredSolid } from "../../../lesson-kit/anatomy/LayeredSolid";
 import { SegmentedControl } from "../../../lesson-kit/controls/SegmentedControl";
 import { Slider } from "../../../lesson-kit/controls/Slider";
 import { fill } from "../../../lesson-kit/format";
@@ -142,12 +143,12 @@ export function LockFigure({ text, step = null, goTo, still = false, interactive
           <Line d={SHEAR_LINE} tone={canTurn(pins) ? "lit" : "faint"} dashed={!canTurn(pins)} />
           <g data-piece="plug">
             <g data-focus="key" ref={(node) => (nodes.current.key = node)} transform={shift(insertion.current)}>
-              <Solid paths={key.bow} tone="mid" lit={focus === "key"} inner={<Line d={key.hole} tone="lo" />} />
-              <Solid paths={key.blade} tone="hi" lit={focus === "key"} />
+              <LayeredSolid paths={key.bow} tone="mid" lit={focus === "key"} inner={<Line d={key.hole} tone="lo" />} />
+              <LayeredSolid paths={key.blade} tone="hi" lit={focus === "key"} />
             </g>
             {PIN_PATHS.map((paths, index) => (
               <g key={index} data-focus="pins" data-blocking={bind > 0 && !pins[index].aligned ? "" : undefined} ref={(node) => (nodes.current.keyPins[index] = node)} transform={shift(0, 0, pins[index].bottom)}>
-                <Solid paths={paths.key} tone="hi" lit={focus === "pins"} />
+                <LayeredSolid paths={paths.key} tone="hi" lit={focus === "pins"} />
               </g>
             ))}
           </g>
@@ -156,13 +157,13 @@ export function LockFigure({ text, step = null, goTo, still = false, interactive
               <g key={index} data-focus="pins">
                 <path className="iso-line" data-tone="lo" data-free="" ref={(node) => (nodes.current.springs[index] = node)} d={springPath(PIN_X[index], pins[index].top + 10, CHAMBER_TOP)} />
                 <g data-blocking={bind > 0 && !pins[index].aligned ? "" : undefined} ref={(node) => (nodes.current.drivers[index] = node)} transform={shift(0, 0, pins[index].top)}>
-                  <Solid paths={paths.driver} tone="mid" lit={focus === "pins"} />
+                  <LayeredSolid paths={paths.driver} tone="mid" lit={focus === "pins"} />
                 </g>
               </g>
             ))}
           </g>
           <g data-piece="cam" data-focus="cam">
-            <Solid paths={camPaths(angle)} tone="hi" lit={focus === "cam"} />
+            <LayeredSolid paths={camPaths(angle)} tone="hi" lit={focus === "cam"} />
           </g>
         </>
       )}

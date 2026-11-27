@@ -1,11 +1,12 @@
 import { memo } from "react";
-import { Dots, Line, Solid } from "../../anatomy/react/draw";
+import { Dots, Line } from "../../anatomy/react/draw";
+import { LayeredSolid } from "./LayeredSolid";
 
 function Draw({ draw, lit }) {
   if (draw.type === "halo") return <path className="iso-halo" d={draw.d} />;
   if (draw.type === "solid")
     return (
-      <Solid paths={draw.paths} tone={draw.tone} crease={draw.crease} flat={draw.flat} lit={draw.lit || lit} inner={draw.inner?.map((mark, index) => <Line key={index} d={mark.d} tone={mark.tone} />)} />
+      <LayeredSolid paths={draw.paths} tone={draw.tone} crease={draw.crease} flat={draw.flat} lit={draw.lit || lit} inner={draw.inner?.map((mark, index) => <Line key={index} d={mark.d} tone={mark.tone} />)} />
     );
   if (draw.type === "line") return <Line d={draw.d} tone={lit && draw.tone !== "faint" ? "lit" : draw.tone} free={draw.free} flow={draw.flow} dotted={draw.dotted} />;
   if (draw.type === "dots") return <Dots points={draw.points} size={draw.size} tone={draw.tone} />;
