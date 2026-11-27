@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { initialState as fridgeStart, setpointOf, stepFridge, HYSTERESIS } from "../lessons/fridge/figure/model";
 import { initialState as batteryStart, openCircuit, stepBattery, FULL, EMPTY } from "../lessons/battery/figure/model";
 import { poseAt, TRAVEL, ROTATION } from "../lessons/m16/figure/model";
+import { canTurn, combinations, pinsAt, KEY_OUT, KEYS, SHEAR } from "../lessons/lock/figure/model";
+import { contacts, initialState as motorStart, noLoadRpm, rpmOf, spinByHand, stepMotor, torqueOf, K, RESISTANCE } from "../lessons/motor/figure/model";
 
 const run = (step, state, seconds, ...args) => {
   let next = state;
@@ -55,5 +57,62 @@ describe("m16 cycle", () => {
 
   it("never jumps between samples", () => {
     for (let t = 0; t < 1; t += 0.002) expect(Math.abs(poseAt(t + 0.002).carrier - poseAt(t).carrier)).toBeLessThan(2);
+  });
+});
+
+describe("lock model", () => {
+  it("lifts every gap to the shear line only with the right key fully in", () => {
+    const pins = pinsAt(KEYS.correct, 0);
+    pins.forEach((pin) => expect(pin.top).toBeCloseTo(SHEAR));
+    expect(canTurn(pins)).toBe(true);
+  });
+
+  it("binds with the wrong key or a key part-way in", () => {
+    expect(canTurn(pinsAt(KEYS.wrong, 0))).toBe(false);
+    expect(canTurn(pinsAt(KEYS.correct, -2))).toBe(false);
+    expect(canTurn(pinsAt(KEYS.correct, KEY_OUT))).toBe(false);
+  });
+
+  it("counts 10^5 combinations", () => expect(combinations()).toBe(100000));
+});
+
+describe("motor model", () => {
+  const settle = (volts, load = 0) => run((s, dt) => stepMotor(s, { volts, load }, dt), motorStart(), 2);
+
+  it("settles where back-EMF nearly matches the supply", () => {
+    const state = settle(12);
+    expect(rpmOf(state.omega)).toBeGreaterThan(noLoadRpm(12) * 0.99);
+    expect(rpmOf(state.omega)).toBeLessThanOrEqual(noLoadRpm(12));
+    expect(state.current).toBeLessThan(0.05);
+  });
+
+  it("runs backwards on reversed supply", () => expect(rpmOf(settle(-12).omega)).toBeLessThan(-noLoadRpm(12) * 0.99));
+
+  it("slows under the brake until its torque matches the load", () => {
+    const state = settle(12, 60);
+    expect(torqueOf(state.current)).toBeCloseTo(60, 0);
+    expect(rpmOf(state.omega)).toBeLessThan(noLoadRpm(12) * 0.6);
+  });
+
+  it("stalls and draws V/R when the brake beats it", () => {
+    const state = settle(12, 120);
+    expect(state.omega).toBe(0);
+    expect(state.current).toBeCloseTo(12 / RESISTANCE);
+  });
+
+  it("draws full current when held still by hand", () => {
+    const held = spinByHand({ omega: 0, angle: 1 }, 1, 0.05, 12);
+    expect(held.current).toBeCloseTo(12 / RESISTANCE);
+    expect(spinByHand({ omega: 0, angle: 0 }, 0.05, 0.05, 0).current).toBeCloseTo((-K * 100) / RESISTANCE);
+  });
+
+  it("always feeds current to at least one coil and switches it as the rotor turns", () => {
+    const lit = new Set();
+    for (let angle = 0; angle < 2 * Math.PI; angle += 0.01) {
+      const { coil } = contacts(angle);
+      expect(coil.some((value) => value > 0) || coil.every((value) => value === 0)).toBe(true);
+      lit.add(coil.indexOf(1));
+    }
+    expect([...lit].filter((index) => index >= 0).sort()).toEqual([0, 1, 2]);
   });
 });
